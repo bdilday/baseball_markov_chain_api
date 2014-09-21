@@ -238,6 +238,7 @@ def loopAndPlot(nbasemin=3, nbasemax=3, noutmin=1, noutmax=20, probs=None, vbose
         plt.ylabel('runs per inning / run per inning (%d outs)' % (normIndex+1))
     else:
         plt.ylabel('runs per inning')
+    return xx, yy
 
 def main(nbases=3, nouts=3, vbose=0, probs=None):
     m = mlbMarkov(nbases=nbases, nouts=nouts, vbose=vbose)
