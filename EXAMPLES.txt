@@ -42,10 +42,9 @@ make plots (one for each number-of-bases) of mean runs per inning in the bases-e
 >> nbasemax = 4
 >> noutmin = 1
 >> noutmax = 15
->> mlbMarkov.loopAndPlot(probs=probs, nbasemin=nbasemax, nbasemax=nbasemin, noutmin=noutmin, noutmax=noutmax)
+>> mlbMarkov_nm.loopAndPlot(probs=probs, nbasemin=nbasemax, nbasemax=nbasemin, noutmin=noutmin, noutmax=noutmax)
 
 same, but scale it to runs-with-3-outs (using normIndex)
-make plots (one for each number-of-bases) of mean runs per inning in the bases-empty, no-out state, as a function of outs 
 > python
 >> import mlbMarkov_nm
 >> probs = {0: 0.69, 1: 0.23, 2: 0.05, 3: 0.005, 4: 0.025}
@@ -53,5 +52,5 @@ make plots (one for each number-of-bases) of mean runs per inning in the bases-e
 >> nbasemax = 4
 >> noutmin = 1
 >> noutmax = 15
->> mlbMarkov.loopAndPlot(probs=probs, nbasemin=nbasemax, nbasemax=nbasemin, noutmin=noutmin, noutmax=noutmax, normIndex=2)
+>> mlbMarkov_nm.loopAndPlot(probs=probs, nbasemin=nbasemax, nbasemax=nbasemin, noutmin=noutmin, noutmax=noutmax, normIndex=2)
 
