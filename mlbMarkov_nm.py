@@ -4,7 +4,7 @@ import os, sys
 import re
 #import pickle
 import numpy as np
-#import copy
+import copy
 #from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 
@@ -177,7 +177,7 @@ class mlbMarkov:
         print 'idx state expectRunsPerInn'
         for i, v in enumerate(self.solvedSystem):
             s = self.int2state[i]
-            print '%3d %s %.3f' % (i, s, v)
+            print '%3d %s %.6f' % (i, s, v)
 
     def printTransitionMatrix(self):
         print 'tm', np.shape(self.transitionMatrix)
@@ -261,6 +261,7 @@ if __name__=='__main__':
     probs[3] = 0.005 
     probs[4] = 0.025
     probs[0] = 1-(probs[1]+probs[2]+probs[3]+probs[4])
+    doLinearWeights = False
 
     for ia, a in enumerate(sys.argv):
         if a=='-nbases' or a=='-nbase':
@@ -278,7 +279,9 @@ if __name__=='__main__':
         if a=='-printProb' or a=='-printProbs':
             printProbs = bool(int(sys.argv[ia+1]))
 
-    
+        if a=='-doLinearWeights':
+            doLinearWeights = bool(int(sys.argv[ia+1]))
+
     m = main(nbases=nbases, nouts=nouts, vbose=vbose, probs=probs)
     m.probs = m.reNorm(m.probs)
     m.makeTransitionMatrix()    
@@ -304,4 +307,43 @@ if __name__=='__main__':
 
 
     ans = m.solveSystem()
+
     m.printSolution(printProbs=printProbs)
+
+    if doLinearWeights:
+        pebble = 1e-6
+        oprobs = copy.copy(probs)
+        r0 = m.solvedSystem[0]
+        obp0 = 1-m.probs[0]
+        pa0 = 1.0/(1.0-obp0)*27
+
+        lws = {}
+
+        for i in range(1,nbases+2):
+            probs = copy.copy(oprobs)
+            probs[i] += pebble
+            del m
+            m = main(nbases=nbases, nouts=nouts, vbose=vbose, probs=probs)
+            m.probs = m.reNorm(m.probs)
+            if vbose>=2:
+                print 'probs', oprobs, m.probs
+            m.makeTransitionMatrix()    
+            m.makeValueMatrix()
+
+            ans = m.solveSystem()
+            r1 = m.solvedSystem[0]
+            obp1 = 1-m.probs[0]
+            pa1 = 1.0/(1.0-obp1)*27
+            lw = (r1-r0)/(pa1-pa0)*9
+            lws[i] = lw
+            if vbose>=1:
+                print 'LW: %d ' % i, r1, r0, obp1, obp0, pa0, pa1
+            print 'LW: %d %+.4f' % (i, lws[i])
+
+
+        s = 0.0
+        for i in range(1,nbases+2):
+            s += oprobs[i]*lws[i]
+        lws[0] = -1.0*s/(1-obp0)
+        i = 0
+        print 'LW: %d %+.4f' % (i, lws[i])
