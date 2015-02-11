@@ -14,6 +14,20 @@ idx state expectRunsPerInn
   1 000_01 0.199
   etc...
 
+3 bases, 3 outs, default hit probabilities, and generate linear weights
+> python mlbMarkov_nm.py -nbases 3 -nouts 3 -doLinearWeights 1
+idx state expectRunsPerInn
+  0 000_00 0.369
+  1 000_01 0.199
+  etc...
+ 23 111_02 0.617807
+LW: 1 +0.3231
+LW: 2 +0.6270
+LW: 3 +1.0299
+LW: 4 +1.5281
+LW: 0 -0.2159
+
+
 3 bases, 4 outs, default hit probabilities
 > python mlbMarkov_nm.py -nbases 3 -nouts 4
 idx state expectRunsPerInn
