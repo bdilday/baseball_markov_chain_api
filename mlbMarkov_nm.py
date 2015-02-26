@@ -282,6 +282,10 @@ if __name__=='__main__':
         if a=='-doLinearWeights':
             doLinearWeights = bool(int(sys.argv[ia+1]))
 
+    for i in range(nbases+2):
+        if not i in probs:
+            probs[i] = 0
+
     m = main(nbases=nbases, nouts=nouts, vbose=vbose, probs=probs)
     m.probs = m.reNorm(m.probs)
     m.makeTransitionMatrix()    
