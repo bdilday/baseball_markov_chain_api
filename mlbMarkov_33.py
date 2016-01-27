@@ -127,7 +127,7 @@ class mlbMarkov:
     def getValue(self, oldState, newState):
         oldb, oldo = self.stateToInfo(oldState)
         newb, newo = self.stateToInfo(newState)
-        if newo>oldo:
+        if newo>oldo or newo==3:
             return 0
         # value is number that scored
         # this is, n_start + 1 = n_end + n_score
@@ -182,10 +182,11 @@ class mlbMarkov:
         for i, oldState in enumerate(allStates):
             iold = self.state2int[oldState]
             for j, newState in enumerate(allStates):
-                if self.vbose>=1:
-                    print '** makeVM *******'
                 inew = self.state2int[newState]
                 self.valueMatrix[inew][iold] = self.getValue(oldState, newState)
+                if self.vbose>=1:
+                    print '** makeVM *******'
+                    print iold, inew, self.valueMatrix[inew][iold]
 
 
     def solveSystem(self):
