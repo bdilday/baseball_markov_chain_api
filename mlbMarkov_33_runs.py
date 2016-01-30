@@ -3,15 +3,13 @@ import numpy as np
 
 import os, sys
 import re
-#import pickle
 import numpy as np
 import copy
-#from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import pyplot as plt
 import seaborn as sns
 
 class mlbMarkov:
-    def __init__(self, vbose=0, nbases=3, nouts=3):
+    def __init__(self, vbose=0, nbases=3, nouts=3, max_score=15, probs=None):
         self.max_score = 15
         self.vbose = vbose
         self.nbases = nbases
@@ -22,17 +20,25 @@ class mlbMarkov:
         self.sz = len(self.allStates)
         self.initTransitionMatrix()
         self.probs = {}
-        self.probs = {}
         for i in range(10):
             self.probs[i] = 0
-        self.init_probs()
+        if probs is None:
+            self.init_probs()
+        else:
+            for i in range(nbases+2):
+                self.probs[i] = probs['p%d' % i]
+
+        self.probs_dict = {}
+        for i in range(self.nbases+2):
+            self.probs_dict['prob%d' % i] = self.probs[i]
+
         self.solvedSystem = None
 
         self.transitionMatrix = self.initTransitionMatrix()
         self.valueMatrix = self.initValueMatrix()
         self.runsMatrix = np.zeros((self.max_score+1, self.sz))
         self.makeTransitionMatrix()
-        assert np.all(abs(self.transitionMatrix.sum(0)-1)<1e-6)
+        assert np.all(abs(self.transitionMatrix.sum(0)-1)<1e-6), self.transitionMatrix.sum(0)
 
         self.makeValueMatrix()
         self.summary_keys = ['man1', 'man2', 'man3', 'out0', 'out1', 'out2', 'out3']
@@ -230,12 +236,10 @@ class mlbMarkov:
         return ans
 
     def printSolution(self, state_vector, printProbs=True):
-        if self.vbose>=1:
-            print 'idx state prob'
+        print 'idx state prob'
         for i, v in enumerate(state_vector):
             s = self.int2state[i]
-            if self.vbose>=1:
-                print '%3d %s %.6f' % (i, s, v)
+            print '%3d %s %.6f' % (i, s, v)
 
     def parse_state(self, state, n=0):
         m3, m2, m1 = state.split('_')[0][:]
@@ -257,6 +261,7 @@ class mlbMarkov:
         # data['out2_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
         # data['out3_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
 
+        mean_runs = 0.0
         if self.vbose>=1:
             print data
         for i, p in enumerate(stateVector):
@@ -264,16 +269,17 @@ class mlbMarkov:
             ans = self.parse_state(s)
             if self.vbose>=1:
                 print s, ans, p
-            if p==0:
+            if p[0]==0:
                 continue
             for k in ['man1', 'man2', 'man3']:
                 data[k] += p[0]*ans[k]
             assert ans['nruns']>=0 or p<1e-6
             k = 'run%d' % ans['nruns']
             data[k] += p[0]
+            mean_runs += ans['nruns']*p[0]
             k = 'out%d' % ans['nouts']
             data[k] += p[0]
-
+        data['mean_runs'] = mean_runs
         return data
 
     def generate_sequence(self, v0, nseq=10):
@@ -286,7 +292,8 @@ class mlbMarkov:
                 v = self.transitionMatrix.dot(v)
 
             summary = self.state_vector_to_summary(v, n=i)
-            print summary
+            if self.vbose>=1:
+                print summary
             seq.append(summary)
         return seq
 
@@ -306,6 +313,8 @@ class mlbMarkov:
         plt.text(self.max_score+7, 0.9, 'PA= %03d' % n, ha='right')
         plt.ylabel('probability')
         plt.title('baseball markov chain')
+        plt.axvline(3-0.5, color='k', linewidth=2)
+        plt.axvline(7-0.5, color='k', linewidth=2)
 
     def transitionMatrixOutputArray(self, threshold=1e-6):
         ans = []
@@ -348,6 +357,16 @@ class mlbMarkov:
         descrpition = '%d of %d' % (counter, self.sz)
         print '%13s %.6f' % (descrpition, s)
         print 'max %s %.4f' % (self.int2state[maxi], maxp)
+
+    def server_hook(self, **kwargs):
+        nseq = kwargs['nseq']
+        print kwargs, nseq
+
+        seq = self.generate_sequence(self.v0, nseq=kwargs['nseq'])
+        tmp = {}
+
+        return {'seq': seq, 'probs': self.probs_dict, 'seq_length': nseq}
+
 def main(nbases=3, nouts=3, vbose=0, probs=None):
     m = mlbMarkov(nbases=nbases, nouts=nouts, vbose=vbose)
 

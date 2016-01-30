@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Baseball Markov Chain API landing page</title>
+</head>
+<body>
+
+<h1>Baseball Markov Chain API landing page</h1>
+
+<div>
+    <p>This is the landing page for the Baseball Markov Chain API server</p>
+    <p>You can use the service by making a get request to </p>
+    <p>possible query parametees are</p>
+    <ul>
+        <li>p0, p1, p2, p3, p4: probability for an out, single, double, triple, HR</li>
+        <li>seq_length: length of the returned sequence. default is 10, maximum allowed is 30</li>
+    </ul>
+
+    <p>The request will return a json string which includes:</p>
+    <ul>
+        <li>p0-p4: the probabilities applied</li>
+        <li>seq_length: the length of the returned sequence</li>
+        <li>seq: an array of state summaries</li>
+        <li>state_summaries: includes the keys: manN, outN, runsN, with value the probability
+            the state has N (men-on-base, outs, runs scored), respectively.
+            <p>
+        Also includes mean_runs, the mean numebr of runs up to this point in the sequence</li>
+    </p>
+    </ul>
+</div>
+</body>
+</html>
