@@ -5,8 +5,6 @@ import os, sys
 import re
 import numpy as np
 import copy
-from matplotlib import pyplot as plt
-import seaborn as sns
 
 class mlbMarkov:
     def __init__(self, vbose=0, nbases=3, nouts=3, max_score=15, probs=None):
@@ -297,24 +295,24 @@ class mlbMarkov:
             seq.append(summary)
         return seq
 
-    def bar_chart_from_summary(self, summary, n=0, ysc='linear'):
-        xx = []
-        yy = []
-        plt.clf()
-        for i, k in enumerate(self.summary_keys):
-            xx.append(i)
-            yy.append(summary[k])
-
-        plt.bar(np.array(xx)-0.3, yy, color='steelblue')
-        plt.xticks(xx, self.summary_keys, rotation='vertical', fontsize=10)
-        plt.yscale(ysc)
-        plt.ylim(0.01,1)
-        plt.xlim(-0.5, self.max_score+8)
-        plt.text(self.max_score+7, 0.9, 'PA= %03d' % n, ha='right')
-        plt.ylabel('probability')
-        plt.title('baseball markov chain')
-        plt.axvline(3-0.5, color='k', linewidth=2)
-        plt.axvline(7-0.5, color='k', linewidth=2)
+    # def bar_chart_from_summary(self, summary, n=0, ysc='linear'):
+    #     xx = []
+    #     yy = []
+    #     plt.clf()
+    #     for i, k in enumerate(self.summary_keys):
+    #         xx.append(i)
+    #         yy.append(summary[k])
+    #
+    #     plt.bar(np.array(xx)-0.3, yy, color='steelblue')
+    #     plt.xticks(xx, self.summary_keys, rotation='vertical', fontsize=10)
+    #     plt.yscale(ysc)
+    #     plt.ylim(0.01,1)
+    #     plt.xlim(-0.5, self.max_score+8)
+    #     plt.text(self.max_score+7, 0.9, 'PA= %03d' % n, ha='right')
+    #     plt.ylabel('probability')
+    #     plt.title('baseball markov chain')
+    #     plt.axvline(3-0.5, color='k', linewidth=2)
+    #     plt.axvline(7-0.5, color='k', linewidth=2)
 
     def transitionMatrixOutputArray(self, threshold=1e-6):
         ans = []
