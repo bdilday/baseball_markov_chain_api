@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Baseball Markov Chain API landing page</title>
+</head>
+<body>
+
+<h1>Baseball Markov Chain API landing page</h1>
+
+<div>
+    <p>This is the landing page for the Baseball Markov Chain API server</p>
+    <p>You can use the service by making a get request to https://baseball-markov-chain.herokuapp.com/baseball_markov_chain</p>
+    <p>possible query parameters are</p>
+    <ul>
+        <li>p0, p1, p2, p3, p4: probability for an out, single, double, triple, HR</li>
+        <li>seq_length: length of the returned sequence. default is 10, maximum allowed is 100</li>
+        <li>max_score: any runs above the max_score are treated as being max_score. default is 10, maximum allowed is 30</li>
+
+    </ul>
+
+    <p>The request will return a json string which includes:</p>
+    <ul>
+        <li>p0-p4: the probabilities applied</li>
+        <li>seq_length: the length of the returned sequence</li>
+        <li>seq: an array of state summaries</li>
+        <li>state_summaries: includes the keys: manN, outN, runsN, with value the probability
+            the state has N (men-on-base, outs, runs scored), respectively.
+            <p>
+        Also includes mean_runs, the mean number of runs up to this point in the sequence</li>
+    </p>
+    </ul>
+
+    <p>Here is an example query to get a sequence of length 10, with the default probabilities</p>
+   <a href="https://baseball-markov-chain.herokuapp.com/baseball_markov_chain?seq_length=10&p0=0.69&p1=0.23&p2=0.05&p3=0.005&p4=0.025&max_score=10" target="_new">http://baseball-markov-chain.herokuapp.com/baseball_markov_chain?seq_length=10&p0=0.69&p1=0.23&p2=0.05&p3=0.005&p4=0.025&max_score=10</a>
+</div>
+</body>
+</html>
