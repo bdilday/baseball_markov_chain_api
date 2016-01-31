@@ -38,7 +38,7 @@ class mlbMarkov:
         self.makeTransitionMatrix()
         assert np.all(abs(self.transitionMatrix.sum(0)-1)<1e-6), self.transitionMatrix.sum(0)
 
-        self.makeValueMatrix()
+    #    self.makeValueMatrix()
         self.summary_keys = ['man1', 'man2', 'man3', 'out0', 'out1', 'out2', 'out3']
         for i in range(self.max_score+1):
             self.summary_keys.append('run%d' % i)
