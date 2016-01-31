@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, send_from_directory, render_template,
 from flask.ext.cors import CORS
 import json
 
-import mlbMarkov_33_runs
+import baseball_markov_chain_api
 
 server = Flask(__name__)
 CORS(server)
@@ -16,9 +16,9 @@ def index():
 def baseball_markov_chain_endpoint():
     a = validate_request(request)
     probs = reNorm(a['probs'])
-    mk = mlbMarkov_33_runs.mlbMarkov(vbose=0,
-                                     probs=probs,
-                                     max_score=a['max_score'])
+    mk = baseball_markov_chain_api.mlbMarkov(vbose=0,
+                                             probs=probs,
+                                             max_score=a['max_score'])
     ans = mk.server_hook(nseq=a['nseq'])
     return json.dumps(ans)
 
