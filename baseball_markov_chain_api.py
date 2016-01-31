@@ -331,8 +331,6 @@ class mlbMarkov:
 
     def server_hook(self, **kwargs):
         nseq = kwargs['nseq']
-        print kwargs, nseq
-
         seq = self.generate_sequence(self.v0, nseq=kwargs['nseq'])
 
         return {'seq': seq, 'probs': self.probs_dict, 'seq_length': nseq}
