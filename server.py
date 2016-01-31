@@ -33,7 +33,7 @@ def validate_request(request):
     ans['p4'] = float(a.get('p4', 0.025))
     ans['probs'] = {'p0': ans['p0'], 'p1': ans['p1'], 'p2': ans['p2'],
                     'p3': ans['p3'], 'p4': ans['p4']}
-    ans['max_score'] = min(a.get('max_score', 10), 30)
+    ans['max_score'] = min(int(a.get('max_score', 10)), 30)
     return ans
 
 def reNorm(a, norm=1.0):

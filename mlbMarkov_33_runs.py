@@ -8,7 +8,7 @@ import copy
 
 class mlbMarkov:
     def __init__(self, vbose=0, nbases=3, nouts=3, max_score=15, probs=None):
-        self.max_score = 15
+        self.max_score = max_score
         self.vbose = vbose
         self.nbases = nbases
         self.nouts = nouts
