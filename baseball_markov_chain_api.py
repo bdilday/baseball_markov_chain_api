@@ -18,7 +18,7 @@ class mlbMarkov:
         self.sz = len(self.allStates)
         self.initTransitionMatrix()
         self.probs = {}
-        for i in range(10):
+        for i in range(self.nbases+2):
             self.probs[i] = 0
         if probs is None:
             self.init_probs()
@@ -64,7 +64,6 @@ class mlbMarkov:
         return a
 
     def initEnumerateStates(self):
-        nb = self.nbases
         nstate = 0
         for i in range(2**(self.nbases)):
             s = bin(i).split('b')[1]
@@ -166,16 +165,13 @@ class mlbMarkov:
 
     def initTransitionMatrix(self):
         sz = len(self.int2state)
-#        del self.transitionMatrix
         self.transitionMatrix = np.zeros((sz, sz))
 
     def initValueMatrix(self):
         sz = len(self.int2state)
-#        del self.transitionMatrix
         self.valueMatrix = np.zeros((sz, sz))
 
     def makeTransitionMatrix(self, vbose=None):
-
         self.initTransitionMatrix()
         allStates = self.allStates
 
@@ -196,7 +192,6 @@ class mlbMarkov:
                     if self.vbose>=1:
                         print 'makeTM', oldState, nb, newState, iold, 'xxx'
                     continue
-#                newB, newO = self.stateToInfo(
                 inew = self.state2int[newState]
                 self.transitionMatrix[inew][iold] += v
                 if self.vbose>=1 or vbose>=1:
@@ -295,32 +290,10 @@ class mlbMarkov:
             seq.append(summary)
         return seq
 
-    # def bar_chart_from_summary(self, summary, n=0, ysc='linear'):
-    #     xx = []
-    #     yy = []
-    #     plt.clf()
-    #     for i, k in enumerate(self.summary_keys):
-    #         xx.append(i)
-    #         yy.append(summary[k])
-    #
-    #     plt.bar(np.array(xx)-0.3, yy, color='steelblue')
-    #     plt.xticks(xx, self.summary_keys, rotation='vertical', fontsize=10)
-    #     plt.yscale(ysc)
-    #     plt.ylim(0.01,1)
-    #     plt.xlim(-0.5, self.max_score+8)
-    #     plt.text(self.max_score+7, 0.9, 'PA= %03d' % n, ha='right')
-    #     plt.ylabel('probability')
-    #     plt.title('baseball markov chain')
-    #     plt.axvline(3-0.5, color='k', linewidth=2)
-    #     plt.axvline(7-0.5, color='k', linewidth=2)
-
     def transitionMatrixOutputArray(self, threshold=1e-6):
         ans = []
         for j in range(self.sz):
             for i in range(self.sz):
-                if i>j:
-                    pass
-#                    continue
                 p = self.transitionMatrix[j][i]
                 if p>threshold:
                     ans.append((i, self.int2state[i],
@@ -361,7 +334,6 @@ class mlbMarkov:
         print kwargs, nseq
 
         seq = self.generate_sequence(self.v0, nseq=kwargs['nseq'])
-        tmp = {}
 
         return {'seq': seq, 'probs': self.probs_dict, 'seq_length': nseq}
 
