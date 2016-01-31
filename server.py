@@ -2,6 +2,7 @@
 from flask import Flask, request, jsonify, send_from_directory, render_template, url_for
 from flask.ext.cors import CORS
 import json
+import re
 
 import baseball_markov_chain_api
 
@@ -18,21 +19,24 @@ def baseball_markov_chain_endpoint():
     probs = reNorm(a['probs'])
     mk = baseball_markov_chain_api.mlbMarkov(vbose=0,
                                              probs=probs,
-                                             max_score=a['max_score'])
+                                             max_score=a['max_score'],
+                                             nbases=a['nbases'],
+                                             nouts=a['nouts'])
     ans = mk.server_hook(nseq=a['nseq'])
     return json.dumps(ans)
 
 def validate_request(request):
     a = request.args
     ans = {}
+    ans['nbases'] = min(int(a.get('nbases', 3)), 6)
+    ans['nouts'] = min(int(a.get('nouts', 3)), 10)
     ans['nseq'] = min(int(a.get('seq_length', 10)), 100)
-    ans['p0'] = float(a.get('p0', 0.69))
-    ans['p1'] = float(a.get('p1', 0.23))
-    ans['p2'] = float(a.get('p2', 0.05))
-    ans['p3'] = float(a.get('p3', 0.005))
-    ans['p4'] = float(a.get('p4', 0.025))
-    ans['probs'] = {'p0': ans['p0'], 'p1': ans['p1'], 'p2': ans['p2'],
-                    'p3': ans['p3'], 'p4': ans['p4']}
+    ans['probs'] = {}
+    for k in a.keys():
+        m = re.match('^p([0-9]+)$', k)
+        if m:
+            idx = int(m.group(1))
+            ans['probs'][idx] = float(a.get(k))
     ans['max_score'] = min(int(a.get('max_score', 10)), 30)
     return ans
 

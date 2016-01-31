@@ -18,14 +18,22 @@ class mlbMarkov:
         self.sz = len(self.allStates)
         self.initTransitionMatrix()
         self.probs = {}
-        for i in range(self.nbases+2):
-            self.probs[i] = 0
-        if probs is None:
-            self.init_probs()
-        else:
-            for i in range(nbases+2):
-                self.probs[i] = probs['p%d' % i]
 
+        self.init_probs()
+
+        if probs is not None:
+            for k, v in probs.items():
+                self.probs[k] = v
+
+        blacklist = []
+        for k in self.probs:
+            if k>(self.nbases+1):
+                blacklist.append(k)
+        for k in blacklist:
+            self.probs.pop(k)
+
+        self.probs = self.reNorm(self.probs)
+        assert abs(sum([float(v) for v in self.probs.values()])-1)<1e-6, self.probs
         self.probs_dict = {}
         for i in range(self.nbases+2):
             self.probs_dict['prob%d' % i] = self.probs[i]
@@ -38,20 +46,28 @@ class mlbMarkov:
         self.makeTransitionMatrix()
         assert np.all(abs(self.transitionMatrix.sum(0)-1)<1e-6), self.transitionMatrix.sum(0)
 
-    #    self.makeValueMatrix()
-        self.summary_keys = ['man1', 'man2', 'man3', 'out0', 'out1', 'out2', 'out3']
+        self.summary_keys = ['out0']
+        for i in range(self.nbases):
+            self.summary_keys.append('man%d' % (i+1))
+        for i in range(self.nouts):
+            self.summary_keys.append('out%d' % (i+1))
+
         for i in range(self.max_score+1):
             self.summary_keys.append('run%d' % i)
         self.v0 = np.zeros((self.sz, 1))
         self.v0[0] = 1
 
     def init_probs(self):
-        self.probs[1] = 0.15+0.08
-        self.probs[2] = 0.05
-        self.probs[3] = 0.005
-        self.probs[4] = 0.025
-        self.probs[0] = 1-(self.probs[1]+self.probs[2]+self.probs[3]+self.probs[4])
-
+        if self.nbases==3:
+            self.probs[1] = 0.15+0.08
+            self.probs[2] = 0.05
+            self.probs[3] = 0.005
+            self.probs[4] = 0.025
+            self.probs[0] = 1-(self.probs[1]+self.probs[2]+self.probs[3]+self.probs[4])
+        else:
+            v = 1.0/(self.nbases+2)
+            for i in range(self.nbases+2):
+                self.probs[i] = v
 
     def reNorm(self, a, norm=1.0):
         sum = 0.0
@@ -153,7 +169,7 @@ class mlbMarkov:
     def getValue(self, oldState, newState):
         oldb, oldo, oldr = self.stateToInfo(oldState)
         newb, newo, newr = self.stateToInfo(newState)
-        if newo>oldo or newo==3:
+        if newo>oldo or newo==self.nouts:
             return 0
         # value is number that scored
         # this is, n_start + 1 = n_end + n_score
@@ -179,11 +195,11 @@ class mlbMarkov:
             # now, for each prob, we compute the prob to transition to new state
             assert oldState in allStates
             iold = self.state2int[oldState]
+
             for nb in range(self.nbases+2):
                 if self.vbose>=1:
                     print '** makeTM *******'
-                if not nb in self.probs:
-                    self.probs[nb] = 0
+                assert nb in self.probs, nb
                 v = self.probs[nb]
 
                 newState = self.getNewState(nb, oldState)
@@ -235,24 +251,26 @@ class mlbMarkov:
             print '%3d %s %.6f' % (i, s, v)
 
     def parse_state(self, state, n=0):
-        m3, m2, m1 = state.split('_')[0][:]
+        ans = {}
+        bs = list(state.split('_')[0][:])
+        counter = 1
+        while len(bs)>0:
+            x = int(bs.pop())
+            k = 'man%d' % counter
+            ans[k] = x
+            counter += 1
+
         nouts = int(state.split('_')[1][:])
-        m3 = int(m3)
-        m2 = int(m2)
-        m1 = int(m1)
         nruns = int(state.split('_')[2][:])
-        return {'man3': m3, 'man2': m2, 'man1': m1, 'nouts': nouts, 'nruns': nruns}
+        ans['nruns'] = nruns
+        ans['nouts'] = nouts
+        return ans
 
     def state_vector_to_summary(self, stateVector, n=0):
 
         data = {}
         for k in self.summary_keys:
             data[k] = 0
-
-        # data['out0_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
-        # data['out1_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
-        # data['out2_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
-        # data['out3_runs'] = dict([('run%d' % i, 0) for i in range(self.max_score+1)])
 
         mean_runs = 0.0
         if self.vbose>=1:
@@ -264,7 +282,8 @@ class mlbMarkov:
                 print s, ans, p
             if p[0]==0:
                 continue
-            for k in ['man1', 'man2', 'man3']:
+            for ibase in range(self.nbases):
+                k = 'man%d' % (ibase+1)
                 data[k] += p[0]*ans[k]
             assert ans['nruns']>=0 or p<1e-6
             k = 'run%d' % ans['nruns']
@@ -387,4 +406,4 @@ if __name__=='__main__':
     m.probs = m.reNorm(m.probs)
     m.makeTransitionMatrix()
     m.makeValueMatrix()
-
+    m.generate_sequence(m.v0)
