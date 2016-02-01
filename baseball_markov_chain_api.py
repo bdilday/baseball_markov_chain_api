@@ -1,7 +1,5 @@
 
-import numpy as np
-
-import os, sys
+import sys
 import re
 import numpy as np
 import copy
@@ -212,9 +210,6 @@ class mlbMarkov:
                 self.transitionMatrix[inew][iold] += v
                 if self.vbose>=1 or vbose>=1:
                     print 'makeTM', oldState, nb, newState, iold, inew, self.transitionMatrix[inew][iold]
-
-        last = self.transitionMatrix.shape[0]-1
-        self.transitionMatrix[last][last] = 1
 
     def makeValueMatrix(self):
 
