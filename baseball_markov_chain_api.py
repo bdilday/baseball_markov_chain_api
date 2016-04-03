@@ -6,16 +6,21 @@ import copy
 
 class mlbMarkov:
     def __init__(self, vbose=0, nbases=3, nouts=3, max_score=15, probs=None):
+        self.n_in_lineup = 9
+        self.innings = 9
         self.max_score = max_score
         self.vbose = vbose
         self.nbases = nbases
         self.nouts = nouts
+        self.total_outs = self.innings*self.nouts
         self.state2int = {}
         self.int2state = {}
         self.initEnumerateStates()
         self.sz = len(self.allStates)
         self.initTransitionMatrix()
         self.probs = {}
+
+        self.lineup_probs = self.set_lineup()
 
         self.init_probs()
 
@@ -47,13 +52,28 @@ class mlbMarkov:
         self.summary_keys = ['out0']
         for i in range(self.nbases):
             self.summary_keys.append('man%d' % (i+1))
-        for i in range(self.nouts):
+        for i in range(self.total_outs):
             self.summary_keys.append('out%d' % (i+1))
 
         for i in range(self.max_score+1):
             self.summary_keys.append('run%d' % i)
         self.v0 = np.zeros((self.sz, 1))
         self.v0[0] = 1
+
+    def set_lineup(self, cfgfile='config.txt'):
+        # TODO: generalize to more than 3 bases
+        aa = {}
+        lines = [l.strip() for l in open(cfgfile).readlines() if len(l)>0]
+        for l in lines:
+            lineup_idx, h1, h2, h3, h4 = l.split()
+            lidx = int(lineup_idx)
+            aa[lidx] = {}
+            aa[lidx][0] = 1.0
+            for i, v in enumerate([h1, h2, h3, h4]):
+                aa[lidx][i+1] = float(v)
+                aa[lidx][0] -= float(v)
+            assert abs(sum([float(v) for v in aa[lidx].values()])-1)<1e-6, aa
+        return aa
 
     def init_probs(self):
         if self.nbases==3:
@@ -77,13 +97,17 @@ class mlbMarkov:
 
         return a
 
+    def bases_string(self, i):
+        s = bin(i).split('b')[1]
+        for j in range(self.nbases-len(s)+1-1):
+            s = '0'+s
+        return s
+
     def initEnumerateStates(self):
         nstate = 0
         for i in range(2**(self.nbases)):
-            s = bin(i).split('b')[1]
-            for j in range(self.nbases-len(s)+1-1):
-                s = '0'+s
-            for o in range(self.nouts+1):
+            s = self.bases_string(i)
+            for o in range(self.total_outs+1):
                 for r in range(self.max_score+1):
                     k = s + '_%02d_%02d' % (o, r)
                     if self.vbose>=1:
@@ -98,19 +122,24 @@ class mlbMarkov:
 
     def getNewState(self, nbaseHit, oldState):
         nb, no, rr = self.stateToInfo(oldState)
+        old_inning_outs = no % self.nouts
+
         if self.vbose>=1:
             print 'old nb', oldState, nbaseHit, nb, no
 
-        if no==self.nouts:
+        if no==self.total_outs:
             # cant transition if all outs already used up
             return oldState
+
+        # it was an out
+        if nbaseHit == 0:
+            # clear bases if it was the last out of the inning
+            nb = 0 if ((no+1) % self.nouts) == 0 else nb
+            return self.infoToState(nb, no+1, rr)
 
         # a new state comes from ,
         # multiply by 2 nb times.
         # dont forget to add 1 the first time
-        if nbaseHit == 0:
-            return self.infoToState(nb, min(no+1, self.nouts), rr)
-
         newNb = nb
         for i in range(nbaseHit):
 
@@ -167,7 +196,8 @@ class mlbMarkov:
     def getValue(self, oldState, newState):
         oldb, oldo, oldr = self.stateToInfo(oldState)
         newb, newo, newr = self.stateToInfo(newState)
-        if newo>oldo or newo==self.nouts:
+        new_inning_outs = newo % self.nouts
+        if newo>oldo or new_inning_outs==self.nouts:
             return 0
         # value is number that scored
         # this is, n_start + 1 = n_end + n_score
@@ -194,11 +224,22 @@ class mlbMarkov:
             assert oldState in allStates
             iold = self.state2int[oldState]
 
+            oldb, oldo, oldr = self.stateToInfo(oldState)
+
             for nb in range(self.nbases+2):
                 if self.vbose>=1:
                     print '** makeTM *******'
                 assert nb in self.probs, nb
-                v = self.probs[nb]
+
+                lineup_idx = (oldb + oldo + oldr + 1) % self.n_in_lineup
+                lineup_idx = 9 if lineup_idx==0 else lineup_idx
+                assert lineup_idx>=1 and lineup_idx<=9, lineup_idx
+
+                if lineup_idx in self.lineup_probs:
+                    v = self.lineup_probs[lineup_idx][nb]
+                else:
+                    # fall back to default
+                    v = self.probs[nb]
 
                 newState = self.getNewState(nb, oldState)
                 assert newState in allStates, newState
