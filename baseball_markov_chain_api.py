@@ -390,6 +390,13 @@ class mlbMarkov:
 
         return {'seq': seq, 'probs': self.probs_dict, 'seq_length': nseq}
 
+    def average_runs_from_state_vector(self, v):
+        a = 0.0
+        for i, p in enumerate(v):
+            _, __, rr = self.stateToInfo(self.int2state[i])
+            a += rr*p
+        return a
+
 def main(nbases=3, nouts=3, vbose=0, probs=None):
     m = mlbMarkov(nbases=nbases, nouts=nouts, vbose=vbose)
 
