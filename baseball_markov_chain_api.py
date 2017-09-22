@@ -3,6 +3,7 @@ import sys
 import re
 import numpy as np
 import copy
+import json
 
 class mlbMarkov:
     def __init__(self, vbose=0, nbases=3, nouts=3, max_score=15, probs=None):
@@ -261,6 +262,17 @@ class mlbMarkov:
         ans['nouts'] = nouts
         return ans
 
+    def base_out_summary(self, state_vector):
+        ans = {}
+        for i, prob_val in enumerate(state_vector):
+            s = self.int2state[i]
+            b, o, r = self.stateToInfo(s)
+            base_out_key = (b, o)
+            if not base_out_key in ans:
+                ans[base_out_key] = 0
+            ans[base_out_key] += state_vector[i][0]
+        return ans
+
     def state_vector_to_summary(self, stateVector, n=0):
 
         data = {}
@@ -289,7 +301,48 @@ class mlbMarkov:
         data['mean_runs'] = mean_runs
         return data
 
-    def generate_sequence(self, v0, nseq=10):
+
+    def sequence_to_json(self, seq):
+        ans = []
+        for i, s in enumerate(seq):
+            for k, prob_val in s.items():
+                base_str = '{:03b}'.format(k[0])
+                print(k, prob_val)
+                tmp = {'step':i,
+                       'base': k[0],
+                       'base1': int(base_str[2]),
+                       'base2': int(base_str[1]),
+                       'base3': int(base_str[0]),
+                       'out': k[1], 'prob_val': prob_val}
+                ans.append(tmp)
+        return ans
+
+    def generate_detailed_sequence(self, v0, nseq=10):
+        seq = []
+
+        for i in range(nseq):
+            if i == 0:
+                v = copy.copy(v0)
+            else:
+                v = self.transitionMatrix.dot(v)
+
+            for start_state_idx in range(len(v)):
+                prob_val = v[start_state_idx][0]
+                ww = self.transitionMatrix[:, start_state_idx].reshape((-1, 1))
+                for j in range(len(ww)):
+                    transition_prob_val = ww[j][0]
+                    tmp = {'step': i,
+                           'start_state': start_state_idx,
+                           'end_state': j,
+                           'p_start': prob_val,
+                           'p_end': prob_val * transition_prob_val
+                           }
+                    seq.append(tmp)
+
+        return seq
+
+
+    def generate_sequence(self, v0, nseq=10, base_out=False):
         seq = []
 
         for i in range(nseq):
@@ -298,7 +351,11 @@ class mlbMarkov:
             else:
                 v = self.transitionMatrix.dot(v)
 
-            summary = self.state_vector_to_summary(v, n=i)
+            if base_out:
+                summary = self.base_out_summary(v)
+            else:
+                summary = self.state_vector_to_summary(v, n=i)
+
             if self.vbose>=1:
                 print summary
             seq.append(summary)
