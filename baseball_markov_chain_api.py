@@ -406,8 +406,8 @@ class mlbMarkov:
 
         return {'seq': seq, 'probs': self.probs_dict, 'seq_length': nseq}
 
-def main(nbases=3, nouts=3, vbose=0, probs=None):
-    m = mlbMarkov(nbases=nbases, nouts=nouts, vbose=vbose)
+def main(nbases=3, nouts=3, vbose=0, probs=None, max_score=15):
+    m = mlbMarkov(nbases=nbases, nouts=nouts, vbose=vbose, max_score=max_score)
 
     for k in probs:
         m.probs[k] = probs[k]
